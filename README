@@ -1,0 +1,17 @@
+To run the program, just type 'python parallel.py' into the terminal
+This will return a plot as described in the homework. It takes quite a while to run, however.
+
+The program consists of:
+- Running a simple dart function in the regular 'simple' way, using multiprocessing(pool) and also using dask.
+- The program steps from 10 to 10**8 darts which gets us to ~100s of computing time
+-parallel.py runs the "program" 10 times to calculate the mean and std deviation, which is plotted
+
+I ran this test on my laptop and also an iMac.The plots for these are saved.
+* MacBook Pro
+  - "MacBook Pro 2.5 GHz Intel Core i5, 4 cores"
+  - I used the 4 cores available on my laptop (identified using sysctl -n hw.ncpu)
+  - I didn't see the same performance as in Dr. Bloom's plots. All three processing types converged to the same place.
+  - The simulation rate seemed to level off faster for the simple processing type
+* iMac
+ - "iMac 4GHz Intal Core i7, 8 cores"
+
