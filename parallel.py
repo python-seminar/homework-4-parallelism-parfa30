@@ -2,32 +2,31 @@ from math import sqrt
 from time import time
 from random import uniform
 import numpy as np
+import dask.bag as db
 
 def dart_simple(darts):
     in_circle = 0
-    start = time()
-    for i in range(darts):
-        x,y = uniform(0,1),uniform(0,1)
-        if sqrt((x-0.5)**2 + (y-0.5)**2) <= 0.5:
-            in_circle +=1
-    end = time()
-    execution_time = end-start
+    x,y = uniform(0,1),uniform(0,1)
+    if sqrt((x-0.5)**2 + (y-0.5)**2) <= 0.5:
+        in_circle +=1
     pi = (4*in_circle)/float(darts)
     #print("Darts: ", darts)
     #print("Execution time: ", execution_time)
     #print("Sim time (darts/sec): ", darts/float(execution_time))
     #print("Pi: ", pi)
-    return execution_time
 
 Darts = []
-for x in range(9):
+for x in range(8):
     Darts.append(10**x)
     
 def simple(darts):
     simple_times = []
     simple_sim = []
     for d in darts:
-        t = dart_simple(d)
+        start=time()
+        for i in range(d):
+            dart_simple(d)
+        t = time()-start
         simple_sim.append(d/float(t))
         simple_times.append(t)
     return simple_times, simple_sim
@@ -37,23 +36,28 @@ from multiprocessing import Pool
 def multi(darts):
     multi_times = []
     multi_sim = []
-    pool = Pool(processes=4)             
-    for i,x in enumerate(pool.map(dart_simple, darts)):
-        multi_times.append(x)
-        multi_sim.append(darts[i]/float(x))
+    pool = Pool(processes=4)
+    for d in darts:      
+        start = time()
+        pool.map(dart_simple, range(1,d,1))
+        t = time()-start
+        multi_times.append(t)
+        multi_sim.append(d/float(t))
     pool.terminate()
     del pool
     return multi_times, multi_sim
 
 
-import dask.bag as db
 def dask(darts):
     dask_times = []
     dask_sim = []
-    b = db.from_sequence(darts)
-    for i,x in enumerate(b.map(dart_simple).compute()):
-        dask_times.append(x)
-        dask_sim.append(darts[i]/float(x))
+    for d in darts:      
+        b = db.from_sequence(range(1,d,1))
+        start = time()
+        b.map(dart_simple).compute()
+        t = time()-start
+        dask_times.append(t)
+        dask_sim.append(d/float(t))
     return dask_times,dask_sim
 
 SIMPLE = []
@@ -102,7 +106,7 @@ ax1.set_ylabel("Execution Time (sec) - solid")
 ax1.semilogx()
 ax1.semilogy()
 ax1.set_xlim(10**1,max(Darts))
-ax1.set_title("MacBook Pro 2.5 GHz Intel Core i5, 4 cores running")
+#ax1.set_title("MacBook Pro 2.5 GHz Intel Core i5, 4 cores running")
 
 ax2 = ax1.twinx()
 ax2.plot(Darts,simple_mean_sim,'--',label='simple')
@@ -111,5 +115,6 @@ ax2.plot(Darts,dask_mean_sim,'--',label='dask')
 ax2.set_ylabel("Simulation Rate (Darts/sec) - dashed")
 ax2.semilogy()
 plt.legend(loc=4)
+#plt.savefig("MacBookPro_parallel_output.png")
 plt.show()
-plt.savefig("MacBookPro_parallel_output.png")
+
